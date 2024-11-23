@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>API Rate Limiter</title>
+  <script>
+    let remainingRequests = 10; 
+    let resetTimer = 30; 
+    let timerInterval;
+
+    function updateUI() {
+      document.getElementById('remainingRequests').innerText = remainingRequests;
+      document.getElementById('resetTimer').innerText = resetTimer;
+    }
+
+    function startTimer() {
+      if (timerInterval) clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        if (resetTimer > 0) {
+          resetTimer--;
+          updateUI();
+        } else {
+          remainingRequests = 10;
+          resetTimer = 30;
+          updateUI();
+          clearInterval(timerInterval);
+        }
+      }, 1000); // Update every second
+    }
+
+    async function callAPI() {
+      try {
+        const response = await fetch('http://localhost:5000/api/test');
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Unknown error');
+        }
+
+        const data = await response.json();
+        remainingRequests--; 
+        updateUI(); 
+
+        console.log('API Response:', data);
+      } catch (error) {
+        alert('Error: ' + error.message); 
+      }
+    }
+
+    window.onload = () => {
+      updateUI();
+      startTimer(); 
+    };
+  </script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin-top: 50px;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      color: #fff;
+      background-color: #007bff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    .info {
+      margin: 20px 0;
+      font-size: 18px;
+    }
+  </style>
+</head>
+<body>
+  <h1>API Rate Limiter</h1>
+  <p>Click the button below to call the API. You are limited to 10 requests per 30 seconds.</p>
+  <div class="info">
+    <p><strong>Remaining Requests:</strong> <span id="remainingRequests">10</span></p>
+    <p><strong>Time Until Reset:</strong> <span id="resetTimer">30</span> seconds</p>
+  </div>
+  <button onclick="callAPI()">Call API</button>
+</body>
+</html>
